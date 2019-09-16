@@ -1,0 +1,262 @@
+---
+title: "Project_0525_HeartDisease"
+author: "Anupma Mangla"
+date: "5/25/2019"
+output: html_document
+---
+## install the packages
+
+```{r}
+install.packages("gridExtra")
+install.packages("data.table")
+install.packages("caTools")
+```
+
+## Load the libraries
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(caTools)
+library(gridExtra)
+library(data.table)
+```
+
+# Load the dataset and look into the insights of data
+
+```{r}
+#heartData <- read.csv("~/Desktop/Project/heart.csv")
+heartData <- read.csv("heart.csv")
+input <- copy(heartData)
+dim(input)
+str(input)
+```
+
+# display the first 6 rows
+
+```{r}
+head(input)
+```
+
+# change the columns sex and target to their corresponding values
+```{r}
+input$sex <- ifelse((input$sex == 1), 'male','female')
+input$target <- ifelse((input$target == 1), 'HeartDisease','No Heart Disease')
+
+head(input)
+```
+
+# Number of observations: Healthy Vs Heart Disease cases
+
+```{r}
+table(input$target)
+ggplot(input,aes(target, fill=target)) + geom_bar(stat="count") +
+  ggtitle("Healthy Vs Heart Disease", subtitle="From Heart Disease UCI dataset ") + xlab("Target") + ylab("Number of People")
+```
+
+# Analyse heart disease risk factors: gender, age, high cholesterol, high blood pressure, diabetes 
+
+# How does gender play a role in heart-disease?
+### More males are healthy compared to females
+
+```{r}
+
+table(input$target, input$sex)
+ggplot(input,aes(target, fill=target)) + geom_bar(stat="count") + ggtitle("Role of gender in Heart Disease") + xlab("Target") + ylab("Number of People") + facet_wrap(~sex, ncol=2,scale="fixed") 
+
+```
+
+# How does Age play a role in heart disease?
+### We can see a lot more people in middle age with heart disease than the older age group, so we cant make judgement on age for heart disease
+
+```{r}
+# analazing heart disease over age distribution
+p1 <- ggplot(data = input) + geom_bar(mapping = aes(x = age ,fill = target), position = "dodge") + labs(title = "Role of Age in heart disease") + xlab("Age distribution") + ylab("Number of people") + theme(legend.position = "top", legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+
+p1
+```
+
+# How does cholestrol play a role in heart disease?
+### we dont see many people with heart disease with very high cholestrol value, so high cholestrol does not seem to infer in heart disease
+
+```{r}
+## analazing heart disease over cholestoral
+p2 <- ggplot(data = input) + geom_histogram(mapping = aes(x =  chol, fill = target), position = "dodge", bins = 15) + labs(title = "Role of Cholestrol in heart disease") + xlab("Cholestrol") + ylab("Number of people") + theme(legend.position = c(0.98, 0.98), legend.justification = c("right", "top"), legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+
+p2
+```
+
+# How does resting BP play a role in heart disease?
+###  High BP doesn't indicate higher number in heart disease patients
+
+```{r}
+# Role of resting BP 
+p3 <- ggplot(data = input) + geom_histogram(mapping = aes(x =  trestbps, fill = target), position = "dodge", bins = 15) + labs(title = "Role of resting BP in heart disease") + xlab("Resting Blood Pressure") + ylab("Number of people") + theme( legend.position = c(0.98, 0.98), legend.justification = c("right", "top"), legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+
+p3
+```
+
+# How does fasting blood sugar play a role in heart disease?
+## we see more people with heart disease when sugar level is low, so high sugar does not seem to infer in heart disease
+```{r}
+# Role of fasting blood sugar
+# fasting blood sugar > 120 mg/dl = 1, < 120 mg/dl = 0
+
+p4 <- ggplot(data = input) + geom_histogram(mapping = aes(x =  fbs, fill = target), position = "dodge", bins =3) + labs(title = "Role of fasting blood sugar in heart disease", subtitle="Fasting blood sugar > 120 mg/dl (1= true)") + xlab("Fasting Blood Sugar") + ylab("Number of people") + theme( legend.position = c(0.98, 0.98), legend.justification = c("right", "top"), legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+p4
+
+```
+
+# Create a multi-plot with all the 4 plots
+```{r}
+
+grid.arrange(p1,p2,p3,p4, nrow = 2, ncol = 2)
+
+```
+
+# How does max heart rate differ in healthy vs patients with heart disease?
+##  Heart Disease patients have higher maximum heart rate than healthy patients
+##  thalach, is the attribute to measure maximum heart rate achieved
+  
+```{r}
+ggplot(input,aes(thalach, fill=target)) + 
+  geom_histogram(aes(y=..density..),breaks=seq(70, 205, by=10), color="grey17") + 
+  geom_density(alpha=.1, fill="black") +
+  facet_wrap(~target, ncol=1,scale="fixed") +
+  ggtitle("Max Heart Rate (thalach) Histogram") + xlab("Maximum Heart Rate Achieved") + ylab("Density / Count") + theme(legend.position ="top", legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+```
+
+# How does blood disorder Thalassemia play a role in heart disease?
+## we can see thal type 2,3 have higher no. of people with heart disease
+
+```{r}
+## analazing heart disease over blood disorder Thalassemia (thal)
+ggplot(data = input) + geom_bar(mapping = aes(x = thal ,fill = target), position = "dodge") + labs(title = "Role of blood disorder Thalassemia (thal) in presense of heart disease") + theme( legend.position = c(0.02, 0.98), legend.justification = c("left", "top"), legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+
+```
+
+# How does chest pain play a role in heart disease?
+##  chest pain type 0,1,2 result in a higher number of patients with heart disease, we can infer that cp does play an important in heart disease
+
+```{r}
+
+ggplot(data = input) + geom_bar(mapping = aes(x = cp ,fill = target), position = "dodge") + labs(title = "Role of chest pain in heart disease") + xlab("Type of chest pain") + ylab("Number of people") + theme( legend.position = c(0.98, 0.98), legend.justification = c("right", "top"), legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+```
+
+# How does no. of blood vessels play a role in heart disease?
+##  presence of less no. of blood vessels does indicate a higher chance in having heart disaese
+```{r}
+# analyzing heart disease over number of major blood vessels
+ggplot(data = input) + geom_bar(mapping = aes(x =  ca, fill = target) , position = "dodge") +  labs(title = "Role of Major Blood Vessels (ca) in Heart disease") + xlab("Number of blood vessels in a person") + ylab("Number of people")  + theme( legend.position = c(0.98, 0.98), legend.justification = c("right", "top"), legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+
+```
+
+# What is the role of slope in predicting heart disease
+##  With higher slope value, we can see higher number of people with heart disease
+
+```{r}
+# slope
+ggplot(data = input) + geom_bar(mapping = aes(x = slope ,fill = target), position = "dodge") + labs(title = "The ST segment/heart rate slope as a predictor of CAD") + xlab("Slope") + ylab("Number of people") + theme( legend.position = c(0.99, 0.99), legend.justification = c("right", "top"), legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+```
+
+# Create Multiplot2
+
+```{r}
+
+# Chest pain type
+p1 <- ggplot(data = input) + geom_bar(mapping = aes(x = cp ,fill = target), position = "dodge") + labs(title = "Role of chest pain in heart disease") + xlab("Type of chest pain") + ylab("Number of people") + theme( legend.position = "top", legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+
+# thallasemia
+p2 <- ggplot(data = input) + geom_bar(mapping = aes(x = thal ,fill = target), position = "dodge") + labs(title = "Role of blood disorder thalassemia") + xlab("Thalassemia") + ylab("Number of people") + theme( legend.position ="top", legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+
+# Major blood vessels
+p3 <- ggplot(data = input) + geom_bar(mapping = aes(x =  ca, fill = target) , position = "dodge") +  labs(title = "Role of Major Blood Vessels") + xlab("Number of blood vessels in a person") + ylab("Number of people")  + theme( legend.position = c(0.98, 0.98), legend.justification = c("right", "top"), legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+
+# slope
+p4 <- ggplot(data = input) + geom_bar(mapping = aes(x = slope ,fill = target), position = "dodge") + labs(title = "The ST segment/heart rate slope as a predictor of CAD") + xlab("Slope") + ylab("Number of people") + theme( legend.position = "top", legend.margin=margin(t = 0, unit='cm'), legend.key.size = unit(0.25, "cm"))
+
+grid.arrange(p1,p2,p3,p4, nrow = 2, ncol = 2)
+
+```
+
+## how does gender and cholestrol combined together show the presence/absence of heart disease
+
+```{r}
+g<-ggplot(input)
+g + geom_bar(stat="identity",aes(x=age,y=chol,fill=as.factor(sex)))+xlab("Age")+ylab("cholestrol")+labs(fill="Color Coding")
+```
+
+#After the Descriptive analysis, we create the model for predictive analysis
+
+## we use the dataset to create the model using logistic regression to predict whether a person might or might not have heart disease based on the given attributes.
+
+```{r}
+heartData
+```
+
+## Split the data into training set 80% and testing test 20%
+```{r}
+
+split <- sample.split(heartData, SplitRatio = 0.8)
+trainingSet <- subset(heartData, split == "TRUE")
+testingSet <- subset(heartData, split == "FALSE")
+
+nrow(trainingSet) 
+nrow(testingSet)
+nrow(heartData)
+
+```
+
+## Before creating the model, we munge the data and convert the categorical values to factors
+```{r}
+heartData$sex <- as.factor(heartData$sex)
+heartData$cp <- factor(heartData$cp)
+heartData$restecg <- factor(heartData$restecg)
+heartData$fbs <- factor(heartData$fbs)
+heartData$exang <- factor(heartData$exang)
+heartData$ca <- factor(heartData$ca)
+heartData$thal <- factor(heartData$thal)
+heartData$target <- factor(heartData$target)
+
+str(heartData)  ## structure of heartData
+
+```
+
+## Logistic regression is used to do the prediction analysis, glm(general linear model) function is used to model the data and training set is used as input
+```{r}
+## All the attributes are taken into consideration for analysis
+
+logisticModel <- glm(target ~ age + sex + cp + trestbps + chol + fbs + restecg + thalach + exang + oldpeak + slope + ca + thal, data = trainingSet, family = 'binomial')
+
+summary(logisticModel)
+
+## use step function to eliminate the insignificant variables
+newModel <- step(logisticModel, direction = "backward")
+summary(newModel)
+summary(table(heartData$age, heartData$sex, heartData$target, heartData$trestbps, heartData$cp, heartData$restecg))
+
+```
+
+## plot the model, visual display of regression residuals
+```{r}
+ plot(newModel)
+```
+
+## Run the testing data through the model, as logistic regression is a sigmoid function, if the value is greater than 0.5, we consider it as 1 else 0.
+```{r}
+result <- predict(newModel, newdata = testingSet, type='response')
+
+result <- ifelse(result > 0.5, 1, 0)
+```
+
+# validate the model, compare the actual value of the result to the predicted value and determine the accuracy of the model
+```{r}
+linearPredCorrect <- data.frame(actual=testingSet$target, predicted=result, match = (testingSet$target == result))
+
+linearPredCorrect
+table(linearPredCorrect$match)
+
+accuracy = length(linearPredCorrect$match[linearPredCorrect$match==TRUE])/count(testingSet) * 100
+print(paste("Logistic regression has ", round(accuracy, 2), "% accuracy"))
+
+```
